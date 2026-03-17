@@ -7,28 +7,49 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 import {
   CheckCircle,
   Globe,
   Leaf,
   Menu,
+  Minus,
   Moon,
+  Package,
   PawPrint,
+  Plus,
   Recycle,
   ShoppingCart,
   Sprout,
   Star,
   Sun,
+  Trash2,
   TreePine,
   Users,
   X,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { SiInstagram, SiTiktok, SiX } from "react-icons/si";
 import { toast } from "sonner";
-import { useAddToCart, useSubscribeNewsletter } from "./hooks/useQueries";
+import { useSubscribeNewsletter } from "./hooks/useQueries";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Product {
@@ -36,14 +57,136 @@ interface Product {
   name: string;
   description: string;
   price: string;
+  priceNum: number;
   image: string;
   tag: string;
 }
 
-interface QuickShopState {
-  open: boolean;
-  product: Product | null;
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
   qty: number;
+  image: string;
+}
+
+interface CartState {
+  items: CartItem[];
+  drawerOpen: boolean;
+}
+
+type CartAction =
+  | { type: "ADD"; item: CartItem }
+  | { type: "REMOVE"; id: string }
+  | { type: "UPDATE_QTY"; id: string; qty: number }
+  | { type: "CLEAR" }
+  | { type: "SET_DRAWER"; open: boolean };
+
+interface CartContextValue {
+  state: CartState;
+  addToCart: (item: Omit<CartItem, "qty">) => void;
+  removeFromCart: (id: string) => void;
+  updateQty: (id: string, qty: number) => void;
+  clearCart: () => void;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  totalItems: number;
+  subtotal: number;
+}
+
+// ── Cart Reducer ──────────────────────────────────────────────────────────────
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case "ADD": {
+      const exists = state.items.find((i) => i.id === action.item.id);
+      if (exists) {
+        return {
+          ...state,
+          items: state.items.map((i) =>
+            i.id === action.item.id ? { ...i, qty: i.qty + 1 } : i,
+          ),
+        };
+      }
+      return { ...state, items: [...state.items, { ...action.item, qty: 1 }] };
+    }
+    case "REMOVE":
+      return { ...state, items: state.items.filter((i) => i.id !== action.id) };
+    case "UPDATE_QTY":
+      if (action.qty <= 0) {
+        return {
+          ...state,
+          items: state.items.filter((i) => i.id !== action.id),
+        };
+      }
+      return {
+        ...state,
+        items: state.items.map((i) =>
+          i.id === action.id ? { ...i, qty: action.qty } : i,
+        ),
+      };
+    case "CLEAR":
+      return { ...state, items: [] };
+    case "SET_DRAWER":
+      return { ...state, drawerOpen: action.open };
+    default:
+      return state;
+  }
+}
+
+// ── Cart Context ──────────────────────────────────────────────────────────────
+const CartContext = createContext<CartContextValue | null>(null);
+
+function CartProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(cartReducer, {
+    items: [],
+    drawerOpen: false,
+  });
+
+  const addToCart = useCallback((item: Omit<CartItem, "qty">) => {
+    dispatch({ type: "ADD", item: { ...item, qty: 1 } });
+  }, []);
+  const removeFromCart = useCallback((id: string) => {
+    dispatch({ type: "REMOVE", id });
+  }, []);
+  const updateQty = useCallback((id: string, qty: number) => {
+    dispatch({ type: "UPDATE_QTY", id, qty });
+  }, []);
+  const clearCart = useCallback(() => dispatch({ type: "CLEAR" }), []);
+  const openDrawer = useCallback(
+    () => dispatch({ type: "SET_DRAWER", open: true }),
+    [],
+  );
+  const closeDrawer = useCallback(
+    () => dispatch({ type: "SET_DRAWER", open: false }),
+    [],
+  );
+
+  const totalItems = state.items.reduce((s, i) => s + i.qty, 0);
+  const subtotal = state.items.reduce((s, i) => s + i.price * i.qty, 0);
+
+  return (
+    <CartContext.Provider
+      value={{
+        state,
+        addToCart,
+        removeFromCart,
+        updateQty,
+        clearCart,
+        openDrawer,
+        closeDrawer,
+        totalItems,
+        subtotal,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+function useCart(): CartContextValue {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be inside CartProvider");
+  return ctx;
 }
 
 // ── Data ─────────────────────────────────────────────────────────────────────
@@ -53,6 +196,7 @@ const PRODUCTS: Product[] = [
     name: "Roasted Chili Chickpea Bites",
     description: "Bold, spicy, and packed with plant protein.",
     price: "$4.99",
+    priceNum: 4.99,
     image: "/assets/generated/product-chickpea.dim_400x400.jpg",
     tag: "Best Seller",
   },
@@ -61,6 +205,7 @@ const PRODUCTS: Product[] = [
     name: "Sea Salt Crunch Bites",
     description: "Light, crispy, and perfectly salted.",
     price: "$3.99",
+    priceNum: 3.99,
     image: "/assets/generated/product-crisps.dim_400x400.jpg",
     tag: "New",
   },
@@ -69,6 +214,7 @@ const PRODUCTS: Product[] = [
     name: "Smoky BBQ Protein Bites",
     description: "Smoky flavor with a protein punch.",
     price: "$5.49",
+    priceNum: 5.49,
     image: "/assets/generated/product-bbq.dim_400x400.jpg",
     tag: "High Protein",
   },
@@ -77,6 +223,7 @@ const PRODUCTS: Product[] = [
     name: "Lemon Herb Veggie Crisps",
     description: "Zesty, fresh, and guilt-free crunch.",
     price: "$4.49",
+    priceNum: 4.49,
     image: "/assets/generated/product-lemon.dim_400x400.jpg",
     tag: "Light",
   },
@@ -197,7 +344,6 @@ function useScrollReveal() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
 function StarRating({ count = 5 }: { count?: number }) {
   return (
     <div className="flex gap-0.5">
@@ -217,13 +363,568 @@ function EcoBadge({ label }: { label: string }) {
   );
 }
 
+// ── Cart Drawer ───────────────────────────────────────────────────────────────
+function CartDrawer() {
+  const {
+    state,
+    removeFromCart,
+    updateQty,
+    openDrawer: _open,
+    closeDrawer,
+    subtotal,
+    totalItems,
+  } = useCart();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+  return (
+    <>
+      <Sheet
+        open={state.drawerOpen}
+        onOpenChange={(o) => (o ? _open() : closeDrawer())}
+      >
+        <SheetContent
+          data-ocid="cart.sheet"
+          side="right"
+          className="w-full sm:max-w-md flex flex-col p-0"
+        >
+          <SheetHeader className="px-6 py-5 border-b border-border">
+            <SheetTitle className="font-display font-bold text-xl flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              Your Cart
+              {totalItems > 0 && (
+                <Badge className="bg-brand-orange text-white border-0 ml-1">
+                  {totalItems}
+                </Badge>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {state.items.length === 0 ? (
+              <div
+                data-ocid="cart.empty_state"
+                className="flex flex-col items-center justify-center h-48 text-center"
+              >
+                <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground font-semibold">
+                  Your cart is empty
+                </p>
+                <p className="text-muted-foreground/60 text-sm mt-1">
+                  Add some plant-powered snacks!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {state.items.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    data-ocid={`cart.item.${idx + 1}`}
+                    className="flex gap-3 bg-muted/40 rounded-2xl p-3"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-bold text-sm text-foreground leading-snug mb-1 truncate">
+                        {item.name}
+                      </p>
+                      <p className="text-primary font-bold text-sm">
+                        ${(item.price * item.qty).toFixed(2)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          type="button"
+                          data-ocid={`cart.item.${idx + 1}`}
+                          onClick={() => updateQty(item.id, item.qty - 1)}
+                          className="w-6 h-6 rounded-full bg-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+                          aria-label="Decrease"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-sm font-bold w-5 text-center">
+                          {item.qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQty(item.id, item.qty + 1)}
+                          className="w-6 h-6 rounded-full bg-border flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+                          aria-label="Increase"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-ocid={`cart.delete_button.${idx + 1}`}
+                      onClick={() => removeFromCart(item.id)}
+                      className="p-1.5 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground flex-shrink-0"
+                      aria-label="Remove"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {state.items.length > 0 && (
+            <div className="px-6 py-5 border-t border-border space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted-foreground">
+                  Subtotal
+                </span>
+                <span className="font-display font-extrabold text-xl text-foreground">
+                  ${subtotal.toFixed(2)}
+                </span>
+              </div>
+              <Button
+                data-ocid="cart.primary_button"
+                onClick={() => {
+                  closeDrawer();
+                  setCheckoutOpen(true);
+                }}
+                className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full py-6 text-base shadow-orange transition-all hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Proceed to Checkout →
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <CheckoutModal
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+      />
+    </>
+  );
+}
+
+// ── Checkout Modal ────────────────────────────────────────────────────────────
+interface ShippingInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+}
+
+interface PaymentInfo {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+}
+
+function CheckoutModal({
+  open,
+  onClose,
+}: { open: boolean; onClose: () => void }) {
+  const { state, subtotal, clearCart } = useCart();
+  const [step, setStep] = useState(1);
+  const [orderNumber] = useState(
+    () => `NB-${Math.floor(Math.random() * 90000) + 10000}`,
+  );
+  const [shipping, setShipping] = useState<ShippingInfo>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "United States",
+  });
+  const [payment, setPayment] = useState<PaymentInfo>({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+  });
+
+  const SHIPPING_COST = 5.99;
+  const total = subtotal + SHIPPING_COST;
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => setStep(1), 300);
+  };
+
+  const handlePlaceOrder = () => {
+    setStep(4);
+    clearCart();
+  };
+
+  const stepLabels = ["Review", "Shipping", "Payment", "Confirmed"];
+  const progressPct = ((step - 1) / 3) * 100;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+      <DialogContent
+        data-ocid="checkout.dialog"
+        className="sm:max-w-lg rounded-3xl max-h-[90vh] overflow-y-auto"
+      >
+        <DialogHeader className="pb-2">
+          <DialogTitle className="font-display font-bold text-xl">
+            {step < 4 ? "Checkout" : "Order Confirmed! 🎉"}
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Progress */}
+        {step < 4 && (
+          <div className="mb-4">
+            <div className="flex justify-between text-xs font-semibold mb-2">
+              {stepLabels.slice(0, 3).map((l, i) => (
+                <span
+                  key={l}
+                  className={
+                    i + 1 <= step ? "text-primary" : "text-muted-foreground"
+                  }
+                >
+                  {i + 1}. {l}
+                </span>
+              ))}
+            </div>
+            <Progress
+              data-ocid="checkout.loading_state"
+              value={progressPct}
+              className="h-2 rounded-full"
+            />
+          </div>
+        )}
+
+        {/* Step 1: Order Review */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="space-y-3 max-h-48 overflow-y-auto">
+              {state.items.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-xl object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Qty: {item.qty}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-primary">
+                    ${(item.price * item.qty).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Separator />
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Shipping</span>
+                <span>${SHIPPING_COST.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-display font-extrabold text-base text-foreground pt-1">
+                <span>Total</span>
+                <span className="text-primary">${total.toFixed(2)}</span>
+              </div>
+            </div>
+            <Button
+              data-ocid="checkout.primary_button"
+              onClick={() => setStep(2)}
+              className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full py-6"
+            >
+              Continue to Shipping →
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Shipping Info */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="firstName" className="text-xs font-semibold">
+                  First Name
+                </Label>
+                <Input
+                  id="firstName"
+                  data-ocid="checkout.input"
+                  value={shipping.firstName}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, firstName: e.target.value }))
+                  }
+                  placeholder="Jane"
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lastName" className="text-xs font-semibold">
+                  Last Name
+                </Label>
+                <Input
+                  id="lastName"
+                  value={shipping.lastName}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, lastName: e.target.value }))
+                  }
+                  placeholder="Doe"
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-xs font-semibold">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={shipping.email}
+                onChange={(e) =>
+                  setShipping((s) => ({ ...s, email: e.target.value }))
+                }
+                placeholder="jane@example.com"
+                className="rounded-xl"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="address" className="text-xs font-semibold">
+                Address
+              </Label>
+              <Input
+                id="address"
+                value={shipping.address}
+                onChange={(e) =>
+                  setShipping((s) => ({ ...s, address: e.target.value }))
+                }
+                placeholder="123 Green St"
+                className="rounded-xl"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="city" className="text-xs font-semibold">
+                  City
+                </Label>
+                <Input
+                  id="city"
+                  value={shipping.city}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, city: e.target.value }))
+                  }
+                  placeholder="Mumbai"
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="state" className="text-xs font-semibold">
+                  State
+                </Label>
+                <Input
+                  id="state"
+                  value={shipping.state}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, state: e.target.value }))
+                  }
+                  placeholder="MH"
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="zip" className="text-xs font-semibold">
+                  ZIP Code
+                </Label>
+                <Input
+                  id="zip"
+                  value={shipping.zip}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, zip: e.target.value }))
+                  }
+                  placeholder="400001"
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="country" className="text-xs font-semibold">
+                  Country
+                </Label>
+                <Input
+                  id="country"
+                  value={shipping.country}
+                  onChange={(e) =>
+                    setShipping((s) => ({ ...s, country: e.target.value }))
+                  }
+                  placeholder="India"
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                data-ocid="checkout.cancel_button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="flex-1 rounded-full"
+              >
+                ← Back
+              </Button>
+              <Button
+                data-ocid="checkout.primary_button"
+                onClick={() => setStep(3)}
+                className="flex-1 bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full"
+              >
+                Payment →
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Payment Info */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold"
+              style={{ background: "rgba(46,204,113,0.1)", color: "#27AE60" }}
+            >
+              <CheckCircle className="w-4 h-4" />
+              Secure checkout — demo mode, no real charges
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cardNumber" className="text-xs font-semibold">
+                Card Number
+              </Label>
+              <Input
+                id="cardNumber"
+                data-ocid="checkout.input"
+                value={payment.cardNumber}
+                onChange={(e) =>
+                  setPayment((p) => ({ ...p, cardNumber: e.target.value }))
+                }
+                placeholder="4242 4242 4242 4242"
+                maxLength={19}
+                className="rounded-xl font-mono"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="expiry" className="text-xs font-semibold">
+                  Expiry
+                </Label>
+                <Input
+                  id="expiry"
+                  value={payment.expiry}
+                  onChange={(e) =>
+                    setPayment((p) => ({ ...p, expiry: e.target.value }))
+                  }
+                  placeholder="MM / YY"
+                  maxLength={7}
+                  className="rounded-xl font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cvv" className="text-xs font-semibold">
+                  CVV
+                </Label>
+                <Input
+                  id="cvv"
+                  value={payment.cvv}
+                  onChange={(e) =>
+                    setPayment((p) => ({ ...p, cvv: e.target.value }))
+                  }
+                  placeholder="123"
+                  maxLength={4}
+                  className="rounded-xl font-mono"
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-display font-extrabold text-base text-foreground">
+              <span>Total Due</span>
+              <span className="text-primary">${total.toFixed(2)}</span>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                data-ocid="checkout.cancel_button"
+                variant="outline"
+                onClick={() => setStep(2)}
+                className="flex-1 rounded-full"
+              >
+                ← Back
+              </Button>
+              <Button
+                data-ocid="checkout.confirm_button"
+                onClick={handlePlaceOrder}
+                className="flex-1 bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full"
+              >
+                Place Order 🌱
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Confirmation */}
+        {step === 4 && (
+          <div
+            data-ocid="checkout.success_state"
+            className="text-center py-6 space-y-4"
+          >
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-white text-4xl"
+              style={{
+                background: "linear-gradient(135deg, #2ECC71, #27AE60)",
+              }}
+            >
+              🎉
+            </div>
+            <h3 className="font-display font-extrabold text-2xl text-foreground">
+              Thank you for your order!
+            </h3>
+            <p className="text-muted-foreground">
+              Your plant-powered snacks are on their way. 🌱
+            </p>
+            <div
+              className="inline-block px-5 py-3 rounded-2xl font-mono font-bold text-sm"
+              style={{ background: "rgba(46,204,113,0.1)", color: "#27AE60" }}
+            >
+              Order #{orderNumber}
+            </div>
+            <Button
+              data-ocid="checkout.close_button"
+              onClick={handleClose}
+              className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full py-6 mt-2"
+            >
+              Continue Shopping
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Navbar ────────────────────────────────────────────────────────────────────
 function Navbar({
   dark,
   toggleDark,
-}: { dark: boolean; toggleDark: () => void }) {
+}: {
+  dark: boolean;
+  toggleDark: () => void;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { openDrawer, totalItems } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -235,6 +936,7 @@ function Navbar({
     { label: "Home", href: "#home" },
     { label: "About", href: "#about" },
     { label: "Products", href: "#products" },
+    { label: "Packaging", href: "#packaging" },
     { label: "Sustainability", href: "#sustainability" },
     { label: "Contact", href: "#contact" },
   ];
@@ -250,14 +952,14 @@ function Navbar({
           {/* Logo */}
           <a href="#home" className="flex items-center gap-2 flex-shrink-0">
             <img
-              src="/assets/generated/nubites-logo-transparent.dim_600x200.png"
+              src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
               alt="NÚBITES"
-              className="h-10 w-auto"
+              className="h-10 w-auto object-contain"
             />
           </a>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6">
             {navLinks.map((link, i) => (
               <a
                 key={link.href}
@@ -287,12 +989,27 @@ function Navbar({
               )}
             </button>
 
-            <a href="#products">
+            {/* Cart button with badge */}
+            <button
+              type="button"
+              data-ocid="nav.open_modal_button"
+              onClick={openDrawer}
+              aria-label={`Open cart (${totalItems} items)`}
+              className="relative p-2 rounded-full hover:bg-muted transition-colors duration-200 text-foreground/70 hover:text-foreground"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-brand-orange text-white text-xs font-bold flex items-center justify-center">
+                  {totalItems > 9 ? "9+" : totalItems}
+                </span>
+              )}
+            </button>
+
+            <a href="#products" className="hidden sm:block">
               <Button
                 data-ocid="nav.primary_button"
-                className="hidden sm:flex bg-brand-orange hover:bg-brand-orange/90 text-white font-bold px-5 py-2 rounded-full shadow-orange transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+                className="bg-brand-orange hover:bg-brand-orange/90 text-white font-bold px-5 py-2 rounded-full shadow-orange transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
                 Shop Now
               </Button>
             </a>
@@ -366,80 +1083,40 @@ function HeroSection() {
           className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full opacity-20 animate-blob-delay2"
           style={{ background: "radial-gradient(circle, #2ECC71, #FF7A18)" }}
         />
-        {/* Decorative dots */}
-        <svg
-          role="presentation"
-          aria-hidden="true"
-          className="absolute top-20 right-1/4 opacity-20"
-          width="200"
-          height="200"
-          viewBox="0 0 200 200"
-        >
-          {[0, 1, 2, 3, 4].flatMap((row) =>
-            [0, 1, 2, 3, 4].map((col) => (
-              <circle
-                key={`dot-green-${row}-${col}`}
-                cx={col * 40 + 20}
-                cy={row * 40 + 20}
-                r="3"
-                fill="#2ECC71"
-              />
-            )),
-          )}
-        </svg>
-        <svg
-          role="presentation"
-          aria-hidden="true"
-          className="absolute bottom-20 left-10 opacity-15"
-          width="150"
-          height="150"
-          viewBox="0 0 150 150"
-        >
-          {[0, 1, 2, 3].flatMap((row) =>
-            [0, 1, 2, 3].map((col) => (
-              <circle
-                key={`dot-orange-${row}-${col}`}
-                cx={col * 40 + 20}
-                cy={row * 40 + 20}
-                r="3"
-                fill="#FF7A18"
-              />
-            )),
-          )}
-        </svg>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text content */}
           <div className="text-center lg:text-left">
-            {/* Brand badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-sm mb-6 font-accent">
               <Leaf className="w-4 h-4" />
               100% Plant-Based · Cruelty-Free
             </div>
 
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-6 text-foreground">
-              Snack <span className="gradient-brand-text">Smart.</span> Snack{" "}
-              <span className="gradient-brand-text">Bold.</span>
+            <h1 className="font-display font-extrabold text-5xl lg:text-7xl text-foreground mb-6 leading-tight">
+              Snack <span className="gradient-brand-text">Smart.</span>
               <br />
-              Snack Plant-Based.
+              Snack <span className="gradient-brand-text">Bold.</span>
+              <br />
+              <span className="text-3xl lg:text-4xl font-bold">
+                Plant-Based.
+              </span>
             </h1>
 
-            <p className="font-body text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-lg">
               NÚBITES brings together bold flavors and clean plant-based
               ingredients to create snacks that are delicious, sustainable, and
               made for modern lifestyles.
             </p>
 
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start mb-10">
+            <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start mb-8">
               <a href="#products">
                 <Button
                   data-ocid="hero.primary_button"
-                  size="lg"
-                  className="bg-brand-orange hover:bg-brand-orange/90 text-white font-bold px-8 py-6 rounded-full text-lg shadow-orange hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="bg-brand-orange hover:bg-brand-orange/90 text-white font-bold px-8 py-6 rounded-full shadow-orange text-base transition-all hover:shadow-xl hover:-translate-y-1"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  <ShoppingCart className="w-4 h-4 mr-2" />
                   Shop Now
                 </Button>
               </a>
@@ -447,73 +1124,44 @@ function HeroSection() {
                 <Button
                   data-ocid="hero.secondary_button"
                   variant="outline"
-                  size="lg"
-                  className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold px-8 py-6 rounded-full text-lg transition-all duration-300"
+                  className="px-8 py-6 rounded-full text-base font-bold border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all"
                 >
-                  <Leaf className="w-5 h-5 mr-2" />
                   Explore Flavors
                 </Button>
               </a>
             </div>
 
-            {/* Eco badges */}
-            <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-              {["100% Vegan", "Cruelty-Free", "Plant-Based"].map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-primary/15 text-primary border border-primary/25"
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  {badge}
-                </span>
-              ))}
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+              <EcoBadge label="Vegan" />
+              <EcoBadge label="Gluten-Free" />
+              <EcoBadge label="No Preservatives" />
             </div>
           </div>
 
-          {/* Hero image */}
-          <div className="flex justify-center lg:justify-end relative">
-            <div className="relative">
-              {/* Blob background behind image */}
-              <div
-                className="absolute inset-0 blob-shape scale-110"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(46,204,113,0.25), rgba(255,122,24,0.2))",
-                }}
-              />
+          {/* Hero image / mascot */}
+          <div className="relative flex items-center justify-center">
+            <div
+              className="absolute inset-0 rounded-full opacity-20 blur-3xl"
+              style={{
+                background: "radial-gradient(circle, #2ECC71, #FF7A18)",
+              }}
+            />
+            <div className="relative z-10 flex flex-col items-center">
               <img
-                src="/assets/generated/hero-snacks.dim_1200x700.jpg"
-                alt="NÚBITES plant-based snacks"
-                className="relative z-10 w-full max-w-xl rounded-3xl shadow-2xl animate-float object-cover"
-                style={{ maxHeight: "480px" }}
+                src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
+                alt="NÚBITES Brand Logo"
+                className="w-64 h-64 lg:w-80 lg:h-80 object-contain drop-shadow-2xl animate-float"
               />
-              {/* Floating badges on image */}
-              <div
-                className="absolute -top-4 -left-4 z-20 animate-float-slow"
-                style={{ animationDelay: "1s" }}
-              >
-                <div className="bg-white dark:bg-card rounded-2xl px-4 py-2 shadow-card flex items-center gap-2">
-                  <span className="text-2xl">🌱</span>
-                  <div>
-                    <p className="font-display font-bold text-sm text-foreground">
-                      100% Vegan
-                    </p>
-                    <p className="text-xs text-muted-foreground">Certified</p>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="absolute -bottom-4 -right-4 z-20 animate-float-slow"
-                style={{ animationDelay: "2s" }}
-              >
-                <div className="bg-brand-orange text-white rounded-2xl px-4 py-2 shadow-orange flex items-center gap-2">
-                  <span className="text-2xl">⚡</span>
-                  <div>
-                    <p className="font-display font-bold text-sm">
-                      Plant Protein
-                    </p>
-                    <p className="text-xs opacity-80">Per serving</p>
-                  </div>
+              {/* Floating card */}
+              <div className="mt-4 bg-white dark:bg-card rounded-2xl px-6 py-4 shadow-xl flex items-center gap-4">
+                <span className="text-3xl">🌿</span>
+                <div>
+                  <p className="font-display font-bold text-sm text-foreground">
+                    Nature, With a New Accent.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    100% Plant-Powered Snacks
+                  </p>
                 </div>
               </div>
             </div>
@@ -588,34 +1236,24 @@ function AboutSection() {
                 background: "linear-gradient(135deg, #2ECC71, #FF7A18)",
               }}
             />
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <img
-                src="/assets/uploads/Screenshot-17--2.png"
-                alt="NÚBITES brand overview"
-                className="w-full h-auto object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <div
-                className="w-full aspect-video flex items-center justify-center rounded-3xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #2ECC71 0%, #27AE60 50%, #FF7A18 100%)",
-                }}
-              >
-                <div className="text-center text-white p-12">
-                  <div className="font-accent text-7xl font-bold mb-4">NÚ</div>
-                  <div className="font-display font-bold text-2xl mb-2">
-                    BITES
-                  </div>
-                  <div className="text-base opacity-80">
-                    Nature, With a New Accent.
-                  </div>
-                  <div className="flex justify-center gap-3 mt-6">
-                    <EcoBadge label="Vegan" />
-                    <EcoBadge label="Eco-Friendly" />
-                  </div>
+            <div
+              className="relative w-full aspect-video flex items-center justify-center rounded-3xl overflow-hidden shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, #2ECC71 0%, #27AE60 50%, #FF7A18 100%)",
+              }}
+            >
+              <div className="text-center text-white p-12">
+                <div className="font-accent text-7xl font-bold mb-4">NÚ</div>
+                <div className="font-display font-bold text-2xl mb-2">
+                  BITES
+                </div>
+                <div className="text-base opacity-80">
+                  Nature, With a New Accent.
+                </div>
+                <div className="flex justify-center gap-3 mt-6">
+                  <EcoBadge label="Vegan" />
+                  <EcoBadge label="Eco-Friendly" />
                 </div>
               </div>
             </div>
@@ -642,7 +1280,6 @@ function MissionVisionSection() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Mission */}
           <div
             data-ocid="mission.card"
             className="reveal reveal-delay-1 bg-card rounded-3xl p-8 shadow-card card-hover border-l-4"
@@ -677,7 +1314,6 @@ function MissionVisionSection() {
             </div>
           </div>
 
-          {/* Vision */}
           <div
             data-ocid="vision.card"
             className="reveal reveal-delay-2 bg-card rounded-3xl p-8 shadow-card card-hover border-l-4"
@@ -719,36 +1355,22 @@ function MissionVisionSection() {
 
 // ── Products Section ──────────────────────────────────────────────────────────
 function ProductsSection() {
-  const [quickShop, setQuickShop] = useState<QuickShopState>({
-    open: false,
-    product: null,
-    qty: 1,
-  });
-  const { mutate: addToCart, isPending } = useAddToCart();
+  const { addToCart, openDrawer } = useCart();
 
-  const handleOpenQuickShop = (product: Product) => {
-    setQuickShop({ open: true, product, qty: 1 });
-  };
-
-  const handleConfirmAdd = () => {
-    if (!quickShop.product) return;
-    addToCart(
-      {
-        productId: BigInt(quickShop.product.id),
-        quantity: BigInt(quickShop.qty),
+  const handleAddToCart = (product: Product) => {
+    addToCart({
+      id: String(product.id),
+      name: product.name,
+      price: product.priceNum,
+      image: product.image,
+    });
+    toast.success("🛒 Added to cart!", {
+      description: product.name,
+      action: {
+        label: "View Cart",
+        onClick: openDrawer,
       },
-      {
-        onSuccess: () => {
-          toast.success(
-            `Added ${quickShop.qty}x ${quickShop.product?.name} to cart!`,
-          );
-          setQuickShop({ open: false, product: null, qty: 1 });
-        },
-        onError: () => {
-          toast.error("Could not add to cart. Please try again.");
-        },
-      },
-    );
+    });
   };
 
   return (
@@ -802,7 +1424,7 @@ function ProductsSection() {
                   <button
                     type="button"
                     data-ocid={`products.open_modal_button.${i + 1}`}
-                    onClick={() => handleOpenQuickShop(product)}
+                    onClick={() => handleAddToCart(product)}
                     className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-full text-sm font-bold hover:bg-primary hover:text-white transition-all duration-200"
                   >
                     <ShoppingCart className="w-3.5 h-3.5" />
@@ -814,98 +1436,68 @@ function ProductsSection() {
           ))}
         </div>
       </div>
+    </section>
+  );
+}
 
-      {/* Quick Shop Dialog */}
-      <Dialog
-        open={quickShop.open}
-        onOpenChange={(open) => setQuickShop((s) => ({ ...s, open }))}
-      >
-        <DialogContent
-          data-ocid="quickshop.dialog"
-          className="sm:max-w-md rounded-3xl"
-        >
-          <DialogHeader>
-            <DialogTitle className="font-display font-bold text-xl">
-              {quickShop.product?.name}
-            </DialogTitle>
-          </DialogHeader>
-          {quickShop.product && (
-            <div className="space-y-5">
+// ── Packaging Section ─────────────────────────────────────────────────────────
+function PackagingSection() {
+  return (
+    <section id="packaging" className="py-24 bg-muted/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12 reveal">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-4 font-accent">
+            <Package className="w-4 h-4" />
+            Our Packaging
+          </div>
+          <h2 className="font-display font-bold text-4xl lg:text-5xl text-foreground mb-4">
+            Wholesome Snack Bites —{" "}
+            <span className="gradient-brand-text">Tasty. Natural. Happy.</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Our snacks come in eco-friendly packaging featuring our beloved
+            mascots. Available in resealable bags and tube containers in
+            multiple flavors.
+          </p>
+        </div>
+
+        <div className="reveal reveal-delay-1">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl max-w-4xl mx-auto">
+            {/* Decorative gradient border */}
+            <div
+              className="absolute -inset-1 rounded-3xl opacity-50"
+              style={{
+                background: "linear-gradient(135deg, #2ECC71, #FF7A18)",
+              }}
+            />
+            <div className="relative rounded-3xl overflow-hidden bg-brand-cream dark:bg-card">
               <img
-                src={quickShop.product.image}
-                alt={quickShop.product.name}
-                className="w-full h-48 object-cover rounded-2xl"
+                src="/assets/uploads/package--2.jpeg"
+                alt="NÚBITES Packaging — Wholesome Snack Bites"
+                className="w-full h-auto object-cover"
               />
-              <p className="text-muted-foreground text-sm">
-                {quickShop.product.description}
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="font-display font-extrabold text-2xl text-primary">
-                  {quickShop.product.price}
-                </span>
-                <div className="flex items-center gap-3 bg-muted rounded-full px-3 py-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setQuickShop((s) => ({
-                        ...s,
-                        qty: Math.max(1, s.qty - 1),
-                      }))
-                    }
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg hover:bg-border transition-colors"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <span className="font-bold text-base w-6 text-center">
-                    {quickShop.qty}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setQuickShop((s) => ({ ...s, qty: s.qty + 1 }))
-                    }
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg hover:bg-border transition-colors"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  data-ocid="quickshop.confirm_button"
-                  onClick={handleConfirmAdd}
-                  disabled={isPending}
-                  className="flex-1 bg-brand-orange hover:bg-brand-orange/90 text-white font-bold rounded-full py-6"
-                >
-                  {isPending ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Adding...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
-                    </span>
-                  )}
-                </Button>
-                <Button
-                  data-ocid="quickshop.close_button"
-                  variant="outline"
-                  onClick={() =>
-                    setQuickShop({ open: false, product: null, qty: 1 })
-                  }
-                  className="rounded-full py-6 px-6"
-                >
-                  Cancel
-                </Button>
-              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+
+          {/* Feature badges below image */}
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
+            {[
+              { icon: "♻️", label: "Eco-Friendly Material" },
+              { icon: "🔒", label: "Resealable Bags" },
+              { icon: "🌿", label: "Plant-Based Inks" },
+              { icon: "📦", label: "Multiple Sizes" },
+            ].map((feat) => (
+              <div
+                key={feat.label}
+                className="flex items-center gap-2 px-5 py-3 rounded-full bg-card shadow-card border border-border font-semibold text-sm"
+              >
+                <span className="text-lg">{feat.icon}</span>
+                <span className="text-foreground">{feat.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -921,7 +1513,6 @@ function SustainabilitySection() {
           "linear-gradient(135deg, #1a6b3e 0%, #27AE60 50%, #2ECC71 100%)",
       }}
     >
-      {/* Decorative circles */}
       <div
         className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10"
         style={{ background: "radial-gradient(circle, white, transparent)" }}
@@ -996,13 +1587,12 @@ function LifestyleSection() {
               key={item.label}
               className={`reveal reveal-delay-${i + 1} relative rounded-3xl overflow-hidden aspect-square flex flex-col items-center justify-center cursor-pointer group shadow-card card-hover bg-gradient-to-br ${item.bg}`}
             >
-              <div className="text-white/70 group-hover:text-white transition-colors duration-300 mb-3">
+              <div className="text-white opacity-90 group-hover:scale-110 transition-transform duration-300">
                 {item.icon}
               </div>
-              <p className="font-display font-bold text-white text-sm text-center px-4 drop-shadow">
+              <p className="mt-3 text-white font-display font-bold text-sm text-center px-4">
                 {item.label}
               </p>
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 rounded-3xl" />
             </div>
           ))}
         </div>
@@ -1011,7 +1601,7 @@ function LifestyleSection() {
   );
 }
 
-// ── Testimonials ──────────────────────────────────────────────────────────────
+// ── Testimonials Section ──────────────────────────────────────────────────────
 function TestimonialsSection() {
   return (
     <section className="py-24 bg-background">
@@ -1019,29 +1609,27 @@ function TestimonialsSection() {
         <div className="text-center mb-14 reveal">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-4 font-accent">
             <Star className="w-4 h-4" />
-            Happy Snackers
+            What Snackers Say
           </div>
           <h2 className="font-display font-bold text-4xl lg:text-5xl text-foreground">
-            What People <span className="gradient-brand-text">Are Saying</span>
+            Loved by Plant-Powered{" "}
+            <span className="gradient-brand-text">Fans</span>
           </h2>
         </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t, i) => (
             <div
               key={t.author}
-              className={`reveal reveal-delay-${i + 1} bg-card rounded-3xl p-8 shadow-card card-hover border-t-4`}
-              style={{ borderTopColor: i % 2 === 0 ? "#2ECC71" : "#FF7A18" }}
+              data-ocid={`testimonials.item.${i + 1}`}
+              className={`reveal reveal-delay-${i + 1} bg-card rounded-3xl p-7 shadow-card card-hover`}
             >
-              <div className="mb-4">
-                <StarRating />
-              </div>
-              <p className="text-foreground text-lg leading-relaxed mb-6 font-body italic">
+              <StarRating />
+              <p className="text-foreground text-base leading-relaxed mt-4 mb-6 italic">
                 &ldquo;{t.text}&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold font-display"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   style={{
                     background: "linear-gradient(135deg, #2ECC71, #FF7A18)",
                   }}
@@ -1076,12 +1664,7 @@ function NewsletterSection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    subscribe(email, {
-      onSuccess: () => {
-        setEmail("");
-      },
-    });
+    subscribe(email);
   };
 
   return (
@@ -1090,21 +1673,13 @@ function NewsletterSection() {
       className="py-24 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, #2ECC71 0%, #27AE60 40%, #1a8a4a 100%)",
+          "linear-gradient(135deg, #FF7A18 0%, #FFB347 50%, #FF7A18 100%)",
       }}
     >
-      <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
-        <div
-          className="absolute top-10 right-20 w-64 h-64 rounded-full opacity-10"
-          style={{
-            background: "radial-gradient(circle, #FF7A18, transparent)",
-          }}
-        />
-        <div
-          className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, white, transparent)" }}
-        />
-      </div>
+      <div
+        className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10"
+        style={{ background: "radial-gradient(circle, #FF7A18, transparent)" }}
+      />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="reveal">
@@ -1149,11 +1724,11 @@ function NewsletterSection() {
                 type="submit"
                 disabled={isPending}
                 data-ocid="newsletter.submit_button"
-                className="bg-brand-orange hover:bg-brand-orange/90 text-white font-bold px-8 py-6 rounded-full shadow-orange whitespace-nowrap transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
+                className="bg-foreground hover:bg-foreground/90 text-background font-bold px-8 py-6 rounded-full whitespace-nowrap transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
               >
                 {isPending ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
                     Subscribing...
                   </span>
                 ) : (
@@ -1184,6 +1759,7 @@ function Footer() {
     { label: "Home", href: "#home" },
     { label: "About", href: "#about" },
     { label: "Products", href: "#products" },
+    { label: "Packaging", href: "#packaging" },
     { label: "Sustainability", href: "#sustainability" },
     { label: "Contact", href: "#contact" },
   ];
@@ -1195,9 +1771,10 @@ function Footer() {
           {/* Brand */}
           <div>
             <img
-              src="/assets/generated/nubites-logo-transparent.dim_600x200.png"
+              src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
               alt="NÚBITES"
-              className="h-10 w-auto mb-4 brightness-0 invert"
+              className="h-12 w-auto mb-4 object-contain"
+              style={{ filter: "brightness(0) invert(1)" }}
             />
             <p className="text-background/60 text-sm leading-relaxed mb-4">
               Nature, With a New Accent. Plant-based snacks made for modern
@@ -1309,20 +1886,24 @@ export default function App() {
   const toggleDark = useCallback(() => setDark((d) => !d), [setDark]);
 
   return (
-    <div className="min-h-screen">
-      <Toaster richColors position="top-right" />
-      <Navbar dark={dark} toggleDark={toggleDark} />
-      <main>
-        <HeroSection />
-        <AboutSection />
-        <MissionVisionSection />
-        <ProductsSection />
-        <SustainabilitySection />
-        <LifestyleSection />
-        <TestimonialsSection />
-        <NewsletterSection />
-      </main>
-      <Footer />
-    </div>
+    <CartProvider>
+      <div className="min-h-screen">
+        <Toaster richColors position="top-right" />
+        <Navbar dark={dark} toggleDark={toggleDark} />
+        <CartDrawer />
+        <main>
+          <HeroSection />
+          <AboutSection />
+          <MissionVisionSection />
+          <ProductsSection />
+          <PackagingSection />
+          <SustainabilitySection />
+          <LifestyleSection />
+          <TestimonialsSection />
+          <NewsletterSection />
+        </main>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 }
