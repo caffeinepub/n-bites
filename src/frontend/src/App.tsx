@@ -29,6 +29,7 @@ import {
   Plus,
   Recycle,
   ShoppingCart,
+  Sparkles,
   Sprout,
   Star,
   Sun,
@@ -195,8 +196,8 @@ const PRODUCTS: Product[] = [
     id: 1,
     name: "Roasted Chili Chickpea Bites",
     description: "Bold, spicy, and packed with plant protein.",
-    price: "$4.99",
-    priceNum: 4.99,
+    price: "₹415",
+    priceNum: 415,
     image: "/assets/generated/product-chickpea.dim_400x400.jpg",
     tag: "Best Seller",
   },
@@ -204,8 +205,8 @@ const PRODUCTS: Product[] = [
     id: 2,
     name: "Sea Salt Crunch Bites",
     description: "Light, crispy, and perfectly salted.",
-    price: "$3.99",
-    priceNum: 3.99,
+    price: "₹332",
+    priceNum: 332,
     image: "/assets/generated/product-crisps.dim_400x400.jpg",
     tag: "New",
   },
@@ -213,8 +214,8 @@ const PRODUCTS: Product[] = [
     id: 3,
     name: "Smoky BBQ Protein Bites",
     description: "Smoky flavor with a protein punch.",
-    price: "$5.49",
-    priceNum: 5.49,
+    price: "₹457",
+    priceNum: 457,
     image: "/assets/generated/product-bbq.dim_400x400.jpg",
     tag: "High Protein",
   },
@@ -222,8 +223,8 @@ const PRODUCTS: Product[] = [
     id: 4,
     name: "Lemon Herb Veggie Crisps",
     description: "Zesty, fresh, and guilt-free crunch.",
-    price: "$4.49",
-    priceNum: 4.49,
+    price: "₹373",
+    priceNum: 373,
     image: "/assets/generated/product-lemon.dim_400x400.jpg",
     tag: "Light",
   },
@@ -431,7 +432,7 @@ function CartDrawer() {
                         {item.name}
                       </p>
                       <p className="text-primary font-bold text-sm">
-                        ${(item.price * item.qty).toFixed(2)}
+                        ₹{(item.price * item.qty).toFixed(0)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <button
@@ -478,7 +479,7 @@ function CartDrawer() {
                   Subtotal
                 </span>
                 <span className="font-display font-extrabold text-xl text-foreground">
-                  ${subtotal.toFixed(2)}
+                  ₹{subtotal.toFixed(0)}
                 </span>
               </div>
               <Button
@@ -547,7 +548,7 @@ function CheckoutModal({
     cvv: "",
   });
 
-  const SHIPPING_COST = 5.99;
+  const SHIPPING_COST = 0;
   const total = subtotal + SHIPPING_COST;
 
   const handleClose = () => {
@@ -618,7 +619,7 @@ function CheckoutModal({
                     </p>
                   </div>
                   <span className="text-sm font-bold text-primary">
-                    ${(item.price * item.qty).toFixed(2)}
+                    ₹{(item.price * item.qty).toFixed(0)}
                   </span>
                 </div>
               ))}
@@ -627,15 +628,17 @@ function CheckoutModal({
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(0)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
-                <span>${SHIPPING_COST.toFixed(2)}</span>
+                <span>
+                  {SHIPPING_COST === 0 ? "FREE 🎉" : `₹${SHIPPING_COST}`}
+                </span>
               </div>
               <div className="flex justify-between font-display font-extrabold text-base text-foreground pt-1">
                 <span>Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">₹{total.toFixed(0)}</span>
               </div>
             </div>
             <Button
@@ -852,7 +855,7 @@ function CheckoutModal({
             <Separator />
             <div className="flex justify-between font-display font-extrabold text-base text-foreground">
               <span>Total Due</span>
-              <span className="text-primary">${total.toFixed(2)}</span>
+              <span className="text-primary">₹{total.toFixed(0)}</span>
             </div>
             <div className="flex gap-3 pt-2">
               <Button
@@ -952,7 +955,7 @@ function Navbar({
           {/* Logo */}
           <a href="#home" className="flex items-center gap-2 flex-shrink-0">
             <img
-              src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
+              src="/assets/generated/nubites-logo-nobg-v2-transparent.dim_500x150.png"
               alt="NÚBITES"
               className="h-10 w-auto object-contain"
             />
@@ -1148,10 +1151,25 @@ function HeroSection() {
             />
             <div className="relative z-10 flex flex-col items-center">
               <img
-                src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
-                alt="NÚBITES Brand Logo"
-                className="w-64 h-64 lg:w-80 lg:h-80 object-contain drop-shadow-2xl animate-float"
+                src="/assets/generated/nubites-mascot-hero-transparent.png"
+                alt="NÚBITES Mascot"
+                className="w-full max-w-xs lg:max-w-sm object-contain drop-shadow-2xl animate-float"
               />
+              <h2
+                className="text-4xl lg:text-5xl font-extrabold mt-2 mb-4 text-center"
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  background: "linear-gradient(135deg, #2ECC71, #FF7A18)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                NÚBITES
+              </h2>
+              <p className="text-sm text-center text-muted-foreground mb-4 font-semibold tracking-widest uppercase">
+                Nature, With a New Accent.
+              </p>
               {/* Floating card */}
               <div className="mt-4 bg-white dark:bg-card rounded-2xl px-6 py-4 shadow-xl flex items-center gap-4">
                 <span className="text-3xl">🌿</span>
@@ -1230,31 +1248,202 @@ function AboutSection() {
           </div>
 
           <div className="reveal reveal-delay-2 relative">
+            {/* Neon glow border */}
             <div
-              className="absolute -inset-4 rounded-3xl opacity-30"
+              className="absolute -inset-1 rounded-3xl blur-md opacity-70 animate-pulse"
               style={{
-                background: "linear-gradient(135deg, #2ECC71, #FF7A18)",
+                background:
+                  "linear-gradient(135deg, #2ECC71, #FF7A18, #2ECC71)",
               }}
             />
             <div
               className="relative w-full aspect-video flex items-center justify-center rounded-3xl overflow-hidden shadow-2xl"
               style={{
                 background:
-                  "linear-gradient(135deg, #2ECC71 0%, #27AE60 50%, #FF7A18 100%)",
+                  "radial-gradient(ellipse at 30% 50%, #1a9e50 0%, #166638 40%, #7a2e00 100%)",
               }}
             >
-              <div className="text-center text-white p-12">
-                <div className="font-accent text-7xl font-bold mb-4">NÚ</div>
-                <div className="font-display font-bold text-2xl mb-2">
-                  BITES
+              {/* Animated floating emojis */}
+              {[
+                {
+                  e: "🌿",
+                  style: {
+                    top: "8%",
+                    left: "5%",
+                    animationDelay: "0s",
+                    animationDuration: "3.2s",
+                  },
+                },
+                {
+                  e: "🔥",
+                  style: {
+                    top: "15%",
+                    right: "8%",
+                    animationDelay: "0.5s",
+                    animationDuration: "2.8s",
+                  },
+                },
+                {
+                  e: "✨",
+                  style: {
+                    bottom: "20%",
+                    left: "10%",
+                    animationDelay: "1s",
+                    animationDuration: "3.5s",
+                  },
+                },
+                {
+                  e: "🥜",
+                  style: {
+                    top: "50%",
+                    right: "5%",
+                    animationDelay: "0.3s",
+                    animationDuration: "4s",
+                  },
+                },
+                {
+                  e: "🌶️",
+                  style: {
+                    bottom: "10%",
+                    right: "15%",
+                    animationDelay: "1.5s",
+                    animationDuration: "2.5s",
+                  },
+                },
+                {
+                  e: "💚",
+                  style: {
+                    top: "30%",
+                    left: "3%",
+                    animationDelay: "0.8s",
+                    animationDuration: "3.8s",
+                  },
+                },
+                {
+                  e: "⚡",
+                  style: {
+                    top: "70%",
+                    left: "20%",
+                    animationDelay: "0.2s",
+                    animationDuration: "2.9s",
+                  },
+                },
+                {
+                  e: "🍃",
+                  style: {
+                    top: "5%",
+                    left: "40%",
+                    animationDelay: "1.2s",
+                    animationDuration: "3.3s",
+                  },
+                },
+              ].map((p) => (
+                <span
+                  key={p.e}
+                  className="absolute text-2xl pointer-events-none select-none"
+                  style={{
+                    ...p.style,
+                    animation: `floatUp ${p.style.animationDuration} ease-in-out infinite alternate`,
+                  }}
+                >
+                  {p.e}
+                </span>
+              ))}
+
+              {/* Corner sparkles */}
+              <span
+                className="absolute top-2 left-2 text-3xl animate-spin"
+                style={{ animationDuration: "6s" }}
+              >
+                ✦
+              </span>
+              <span
+                className="absolute top-2 right-2 text-3xl animate-spin"
+                style={{
+                  animationDuration: "8s",
+                  animationDirection: "reverse",
+                }}
+              >
+                ✦
+              </span>
+              <span
+                className="absolute bottom-2 left-2 text-2xl animate-spin"
+                style={{ animationDuration: "7s" }}
+              >
+                ✦
+              </span>
+              <span
+                className="absolute bottom-2 right-2 text-2xl animate-spin"
+                style={{
+                  animationDuration: "5s",
+                  animationDirection: "reverse",
+                }}
+              >
+                ✦
+              </span>
+
+              {/* Main content */}
+              <div className="relative z-10 flex flex-col items-center text-center px-4">
+                <img
+                  src="/assets/generated/nubites-mascot-transparent.png"
+                  alt="NÚBITES Mascots"
+                  className="w-64 h-64 object-contain drop-shadow-2xl"
+                  style={{
+                    mixBlendMode: "multiply",
+                    animation: "wiggle 1.8s ease-in-out infinite",
+                  }}
+                />
+                {/* Brand name with gradient glow */}
+                <div
+                  className="font-display font-black tracking-widest text-4xl md:text-5xl mt-1 drop-shadow-lg"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #fff 0%, #ffe066 50%, #ff9a3c 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    filter: "drop-shadow(0 0 12px rgba(255,200,0,0.7))",
+                  }}
+                >
+                  NÚBITES
                 </div>
-                <div className="text-base opacity-80">
+                <div className="text-white/90 text-xs md:text-sm font-semibold tracking-wider uppercase mt-1">
                   Nature, With a New Accent.
                 </div>
-                <div className="flex justify-center gap-3 mt-6">
-                  <EcoBadge label="Vegan" />
-                  <EcoBadge label="Eco-Friendly" />
+                <div className="text-white font-bold text-sm md:text-base mt-1 italic">
+                  Snack Bold. Live Green. 🌱
                 </div>
+                <div className="flex justify-center gap-3 mt-3">
+                  <span
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white"
+                    style={{
+                      background: "#2ECC71",
+                      boxShadow: "0 0 8px #2ECC71",
+                    }}
+                  >
+                    🌱 Vegan
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white"
+                    style={{
+                      background: "#FF7A18",
+                      boxShadow: "0 0 8px #FF7A18",
+                    }}
+                  >
+                    ♻️ Eco-Friendly
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="mt-4 px-6 py-2 rounded-full font-black text-sm text-white cursor-pointer"
+                  style={{
+                    background: "linear-gradient(90deg, #FF7A18, #2ECC71)",
+                    boxShadow: "0 4px 20px rgba(255,122,24,0.5)",
+                    animation: "bouncePop 1.4s ease-in-out infinite",
+                    border: "2px solid rgba(255,255,255,0.3)",
+                  }}
+                >
+                  🛒 Try Me!
+                </button>
               </div>
             </div>
           </div>
@@ -1497,6 +1686,394 @@ function PackagingSection() {
             ))}
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Flavor Quiz Section ───────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  {
+    id: 0,
+    question: "What's your snack mood?",
+    emoji: "🎭",
+    options: ["Adventurous", "Chill", "Power-up", "Refreshed"],
+  },
+  {
+    id: 1,
+    question: "Pick your flavor vibe:",
+    emoji: "✨",
+    options: ["Spicy 🌶️", "Salty 🧂", "Smoky 🔥", "Zesty 🍋"],
+  },
+  {
+    id: 2,
+    question: "When do you snack?",
+    emoji: "⏰",
+    options: ["Gym time", "Movie night", "Work break", "Outdoor hike"],
+  },
+];
+
+const QUIZ_RESULTS = [
+  {
+    key: "Adventurous",
+    flavor: "Roasted Chili Chickpea Bites",
+    desc: "Bold, fiery, and full of adventure — just like you! These chickpea bites pack the perfect kick.",
+    emoji: "🌶️",
+    tag: "Best Seller",
+    productId: 1,
+  },
+  {
+    key: "Chill",
+    flavor: "Sea Salt Crunch Bites",
+    desc: "Effortlessly cool with a satisfying crunch. Simple perfection for the relaxed snacker.",
+    emoji: "🧂",
+    tag: "Fan Favorite",
+    productId: 2,
+  },
+  {
+    key: "Power-up",
+    flavor: "Smoky BBQ Protein Bites",
+    desc: "Power-packed with protein and a bold smoky depth. Fuel your grind the plant-based way.",
+    emoji: "🔥",
+    tag: "High Protein",
+    productId: 3,
+  },
+  {
+    key: "Refreshed",
+    flavor: "Lemon Herb Veggie Crisps",
+    desc: "Light, zesty, and vibrant — a refreshing burst of herbs and citrus in every bite.",
+    emoji: "🍋",
+    tag: "Light & Fresh",
+    productId: 4,
+  },
+];
+
+function FlavorQuizSection() {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { addToCart, openDrawer } = useCart();
+
+  const result = QUIZ_RESULTS[answers[0] ?? 0];
+  const matchedProduct = PRODUCTS.find((p) => p.id === result.productId);
+
+  const handleAnswer = (optionIndex: number) => {
+    const next = [...answers, optionIndex];
+    setAnswers(next);
+    if (step < 2) {
+      setStep(step + 1);
+    } else {
+      setStep(3);
+      setTimeout(() => setShowConfetti(true), 100);
+    }
+  };
+
+  const reset = () => {
+    setStep(0);
+    setAnswers([]);
+    setShowConfetti(false);
+  };
+
+  const handleAddResult = () => {
+    if (!matchedProduct) return;
+    addToCart({
+      id: String(matchedProduct.id),
+      name: matchedProduct.name,
+      price: matchedProduct.priceNum,
+      image: matchedProduct.image,
+    });
+    toast.success("🛒 Added to cart!", {
+      description: matchedProduct.name,
+      action: { label: "View Cart", onClick: openDrawer },
+    });
+  };
+
+  const progress = step < 3 ? (step / 3) * 100 : 100;
+
+  const buttonColors = [
+    { bg: "#2ECC71", shadow: "rgba(46,204,113,0.5)" },
+    { bg: "#FF7A18", shadow: "rgba(255,122,24,0.5)" },
+    { bg: "#8B5CF6", shadow: "rgba(139,92,246,0.5)" },
+    { bg: "#3B82F6", shadow: "rgba(59,130,246,0.5)" },
+  ];
+
+  const floatingParticles = [
+    { emoji: "🥜", top: "8%", left: "5%", delay: "0s", duration: "3.2s" },
+    { emoji: "🌶️", top: "15%", left: "90%", delay: "0.4s", duration: "2.8s" },
+    { emoji: "🍃", top: "30%", left: "2%", delay: "0.8s", duration: "3.5s" },
+    { emoji: "✨", top: "5%", left: "45%", delay: "0.2s", duration: "2.5s" },
+    { emoji: "🔥", top: "50%", left: "95%", delay: "1.0s", duration: "3.0s" },
+    { emoji: "💚", top: "70%", left: "3%", delay: "0.6s", duration: "2.7s" },
+    { emoji: "🧂", top: "80%", left: "88%", delay: "1.2s", duration: "3.3s" },
+    { emoji: "🌿", top: "90%", left: "20%", delay: "0.3s", duration: "2.9s" },
+    { emoji: "⚡", top: "20%", left: "75%", delay: "0.9s", duration: "2.6s" },
+    { emoji: "🌱", top: "60%", left: "8%", delay: "1.4s", duration: "3.1s" },
+    { emoji: "🥬", top: "40%", left: "92%", delay: "0.5s", duration: "2.4s" },
+    { emoji: "✨", top: "85%", left: "55%", delay: "1.1s", duration: "3.4s" },
+    { emoji: "🔥", top: "12%", left: "60%", delay: "0.7s", duration: "2.3s" },
+    { emoji: "🥜", top: "75%", left: "40%", delay: "1.3s", duration: "3.6s" },
+    { emoji: "🌶️", top: "45%", left: "50%", delay: "1.5s", duration: "2.8s" },
+  ];
+
+  return (
+    <section
+      id="quiz"
+      className="py-24 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #0f2027 0%, #1a6b35 45%, #ff6b00 100%)",
+      }}
+    >
+      <style>{`
+        @keyframes floatUp {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(10deg); }
+        }
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(-5deg) scale(1); }
+          50% { transform: rotate(5deg) scale(1.1); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes rainbowBorder {
+          0% { border-color: #2ECC71; box-shadow: 0 0 12px #2ECC71; }
+          33% { border-color: #FF7A18; box-shadow: 0 0 12px #FF7A18; }
+          66% { border-color: #8B5CF6; box-shadow: 0 0 12px #8B5CF6; }
+          100% { border-color: #2ECC71; box-shadow: 0 0 12px #2ECC71; }
+        }
+        .quiz-rainbow-badge {
+          animation: rainbowBorder 2s infinite;
+          border: 2px solid #2ECC71;
+        }
+        .quiz-shimmer-bar {
+          background: linear-gradient(90deg, #2ECC71 0%, #FFD700 40%, #FF7A18 60%, #2ECC71 100%);
+          background-size: 200% auto;
+          animation: shimmer 1.5s linear infinite;
+        }
+        .quiz-emoji-bounce {
+          animation: wiggle 1.2s ease-in-out infinite;
+          display: inline-block;
+        }
+        .quiz-result-pulse {
+          animation: wiggle 1.8s ease-in-out infinite;
+          display: inline-block;
+        }
+        .quiz-float-particle {
+          animation: floatUp var(--duration, 3s) ease-in-out var(--delay, 0s) infinite;
+          pointer-events: none;
+          user-select: none;
+        }
+      `}</style>
+
+      {/* Floating particles */}
+      {floatingParticles.map((p) => (
+        <span
+          key={`${p.emoji}-${p.top}-${p.left}`}
+          className="absolute text-2xl quiz-float-particle opacity-60"
+          style={
+            {
+              top: p.top,
+              left: p.left,
+              "--delay": p.delay,
+              "--duration": p.duration,
+            } as React.CSSProperties
+          }
+        >
+          {p.emoji}
+        </span>
+      ))}
+
+      {/* Confetti particles */}
+      {showConfetti && step === 3 && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 32 }, (_, i) => i).map((confettiIdx) => (
+            <div
+              key={confettiIdx}
+              className="absolute rounded-full animate-bounce"
+              style={{
+                width: `${8 + (confettiIdx % 5) * 4}px`,
+                height: `${8 + (confettiIdx % 5) * 4}px`,
+                left: `${(confettiIdx * 37) % 100}%`,
+                top: `${(confettiIdx * 23) % 80}%`,
+                background:
+                  confettiIdx % 4 === 0
+                    ? "#fff"
+                    : confettiIdx % 4 === 1
+                      ? "#FF7A18"
+                      : confettiIdx % 4 === 2
+                        ? "#2ECC71"
+                        : "#8B5CF6",
+                animationDelay: `${(confettiIdx * 0.1) % 1}s`,
+                animationDuration: `${1 + (confettiIdx % 3) * 0.3}s`,
+                opacity: 0.85,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-black/30 text-white font-semibold text-sm mb-5 font-accent backdrop-blur-sm quiz-rainbow-badge">
+            <Sparkles className="w-4 h-4 text-yellow-300" />
+            Interactive Quiz
+          </div>
+          <h2
+            className="font-display font-bold text-5xl lg:text-7xl mb-4 drop-shadow-lg"
+            style={{
+              background:
+                "linear-gradient(90deg, #2ECC71 0%, #FFD700 50%, #FF7A18 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Find Your Perfect Snack
+          </h2>
+          <p className="text-white/90 text-xl font-semibold">
+            Answer 3 quick questions and we&apos;ll match you with your NÚBITES
+            soulmate 🌿
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        {step < 3 && (
+          <div className="mb-8">
+            <div className="flex justify-between text-white/80 text-sm mb-2 font-bold">
+              <span>Question {step + 1} of 3</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500 quiz-shimmer-bar"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {step < 3 ? (
+          <div
+            className="bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl"
+            style={{ borderTop: "6px solid #2ECC71" }}
+          >
+            <div className="text-center mb-8">
+              <span className="text-8xl mb-6 block quiz-emoji-bounce">
+                {QUIZ_QUESTIONS[step].emoji}
+              </span>
+              <h3 className="font-display font-bold text-3xl text-gray-900">
+                {QUIZ_QUESTIONS[step].question}
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {QUIZ_QUESTIONS[step].options.map((opt, idx) => (
+                <button
+                  key={opt}
+                  type="button"
+                  data-ocid={`quiz.button.${idx + 1}`}
+                  onClick={() => handleAnswer(idx)}
+                  className="py-5 px-4 rounded-2xl text-white font-bold text-base transition-all duration-200 active:scale-95 shadow-lg cursor-pointer text-center"
+                  style={{
+                    background: buttonColors[idx % 4].bg,
+                    boxShadow: `0 4px 20px ${buttonColors[idx % 4].shadow}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.transform =
+                      "scale(1.08)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      `0 8px 30px ${buttonColors[idx % 4].shadow}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.transform =
+                      "scale(1)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      `0 4px 20px ${buttonColors[idx % 4].shadow}`;
+                  }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`bg-white rounded-3xl overflow-hidden shadow-2xl text-center transition-all duration-700 ${
+              showConfetti
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-8"
+            }`}
+            data-ocid="quiz.card"
+          >
+            {/* Colorful header strip */}
+            <div
+              className="h-3 w-full"
+              style={{
+                background:
+                  "linear-gradient(90deg, #2ECC71, #FFD700, #FF7A18, #8B5CF6, #3B82F6)",
+              }}
+            />
+            <div className="p-8">
+              <div className="text-8xl mb-4 quiz-result-pulse">
+                {result.emoji}
+              </div>
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-white text-sm mb-4 font-accent"
+                style={{
+                  background: "linear-gradient(90deg, #2ECC71, #FF7A18)",
+                }}
+              >
+                <Leaf className="w-3 h-3" />
+                Your Perfect Match
+              </div>
+              <h3 className="font-display font-bold text-2xl text-gray-900 mb-1">
+                {result.flavor}
+              </h3>
+              <p className="text-orange-500 font-bold text-sm mb-1">
+                Made for snack legends 🏆
+              </p>
+              <div className="text-2xl mb-3">⭐⭐⭐⭐⭐</div>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed max-w-xs mx-auto">
+                {result.desc}
+              </p>
+
+              {matchedProduct && (
+                <div className="mb-6 rounded-2xl overflow-hidden shadow-lg max-w-xs mx-auto">
+                  <img
+                    src={matchedProduct.image}
+                    alt={matchedProduct.name}
+                    className="w-full h-40 object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  type="button"
+                  data-ocid="quiz.submit_button"
+                  onClick={handleAddResult}
+                  className="flex items-center justify-center gap-2 text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all duration-200 shadow-xl"
+                  style={{
+                    background: "linear-gradient(90deg, #2ECC71, #FF7A18)",
+                    boxShadow: "0 6px 30px rgba(255,122,24,0.4)",
+                  }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Add to Cart &mdash; {matchedProduct?.price ?? ""}
+                </button>
+                <button
+                  type="button"
+                  data-ocid="quiz.secondary_button"
+                  onClick={reset}
+                  className="flex items-center justify-center gap-2 border-2 border-primary text-primary px-6 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition-all duration-200"
+                >
+                  Retake Quiz ↩
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1771,7 +2348,7 @@ function Footer() {
           {/* Brand */}
           <div>
             <img
-              src="/assets/uploads/Screenshot-2026-02-16-113800-1.png"
+              src="/assets/generated/nubites-logo-nobg-v2-transparent.dim_500x150.png"
               alt="NÚBITES"
               className="h-12 w-auto mb-4 object-contain"
               style={{ filter: "brightness(0) invert(1)" }}
@@ -1897,6 +2474,7 @@ export default function App() {
           <MissionVisionSection />
           <ProductsSection />
           <PackagingSection />
+          <FlavorQuizSection />
           <SustainabilitySection />
           <LifestyleSection />
           <TestimonialsSection />

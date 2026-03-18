@@ -1,0 +1,310 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Open+Sans:wght@400;600&family=Baloo+2:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* NÚBITES Brand Tokens - OKLCH */
+    --brand-green: 0.76 0.17 142;
+    --brand-green-dark: 0.67 0.15 143;
+    --brand-orange: 0.7 0.19 48;
+    --brand-cream: 0.98 0.02 80;
+    --brand-beige: 0.89 0.06 75;
+    --brand-text: 0.23 0 0;
+
+    /* Semantic tokens - light mode */
+    --background: 0.98 0.02 80;
+    --foreground: 0.23 0 0;
+    --card: 1 0 0;
+    --card-foreground: 0.23 0 0;
+    --popover: 1 0 0;
+    --popover-foreground: 0.23 0 0;
+    --primary: 0.76 0.17 142;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.89 0.06 75;
+    --secondary-foreground: 0.23 0 0;
+    --muted: 0.93 0.02 80;
+    --muted-foreground: 0.5 0.02 80;
+    --accent: 0.7 0.19 48;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.58 0.22 28;
+    --destructive-foreground: 1 0 0;
+    --border: 0.88 0.04 80;
+    --input: 0.88 0.04 80;
+    --ring: 0.76 0.17 142;
+    --radius: 1rem;
+    --chart-1: 0.76 0.17 142;
+    --chart-2: 0.7 0.19 48;
+    --chart-3: 0.67 0.15 143;
+    --chart-4: 0.89 0.06 75;
+    --chart-5: 0.5 0.14 45;
+    --sidebar: 0.98 0.02 80;
+    --sidebar-foreground: 0.23 0 0;
+    --sidebar-primary: 0.76 0.17 142;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.89 0.06 75;
+    --sidebar-accent-foreground: 0.23 0 0;
+    --sidebar-border: 0.88 0.04 80;
+    --sidebar-ring: 0.76 0.17 142;
+  }
+
+  .dark {
+    --background: 0.18 0.04 152;
+    --foreground: 0.95 0.02 80;
+    --card: 0.22 0.04 152;
+    --card-foreground: 0.95 0.02 80;
+    --popover: 0.22 0.04 152;
+    --popover-foreground: 0.95 0.02 80;
+    --primary: 0.76 0.17 142;
+    --primary-foreground: 0.15 0.03 152;
+    --secondary: 0.28 0.04 152;
+    --secondary-foreground: 0.95 0.02 80;
+    --muted: 0.26 0.04 152;
+    --muted-foreground: 0.65 0.04 152;
+    --accent: 0.7 0.19 48;
+    --accent-foreground: 0.15 0 0;
+    --destructive: 0.58 0.22 28;
+    --destructive-foreground: 1 0 0;
+    --border: 0.3 0.04 152;
+    --input: 0.3 0.04 152;
+    --ring: 0.76 0.17 142;
+    --chart-1: 0.76 0.17 142;
+    --chart-2: 0.7 0.19 48;
+    --chart-3: 0.67 0.15 143;
+    --chart-4: 0.89 0.06 75;
+    --chart-5: 0.5 0.14 45;
+    --sidebar: 0.18 0.04 152;
+    --sidebar-foreground: 0.95 0.02 80;
+    --sidebar-primary: 0.76 0.17 142;
+    --sidebar-primary-foreground: 0.15 0.03 152;
+    --sidebar-accent: 0.28 0.04 152;
+    --sidebar-accent-foreground: 0.95 0.02 80;
+    --sidebar-border: 0.3 0.04 152;
+    --sidebar-ring: 0.76 0.17 142;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Open Sans", sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Poppins", sans-serif;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Poppins", sans-serif;
+  }
+
+  .font-accent {
+    font-family: "Baloo 2", cursive;
+  }
+
+  .gradient-brand {
+    background: linear-gradient(
+      135deg,
+      oklch(var(--brand-green)),
+      oklch(var(--brand-orange))
+    );
+  }
+
+  .gradient-brand-text {
+    background: linear-gradient(135deg, #2ecc71, #ff7a18);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(46, 204, 113, 0.15);
+  }
+}
+
+/* Blob animation */
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-15px, 15px) scale(0.97);
+  }
+}
+
+@keyframes float-updown {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-blob {
+  animation: blob-float 8s ease-in-out infinite;
+}
+.animate-blob-delay {
+  animation: blob-float 10s ease-in-out infinite 2s;
+}
+.animate-blob-delay2 {
+  animation: blob-float 12s ease-in-out infinite 4s;
+}
+.animate-float {
+  animation: float-updown 4s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+.animate-badge-pulse {
+  animation: badge-pulse 3s ease-in-out infinite;
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 {
+  transition-delay: 0.1s;
+}
+.reveal-delay-2 {
+  transition-delay: 0.2s;
+}
+.reveal-delay-3 {
+  transition-delay: 0.3s;
+}
+.reveal-delay-4 {
+  transition-delay: 0.4s;
+}
+
+/* Nav glass effect */
+.nav-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: oklch(0.98 0.02 80 / 0.9);
+  border-bottom: 1px solid oklch(0.88 0.04 80);
+}
+
+.dark .nav-glass {
+  background: oklch(0.18 0.04 152 / 0.92);
+  border-bottom: 1px solid oklch(0.3 0.04 152);
+}
+
+/* Organic shape clip */
+.blob-shape {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+/* Star rating */
+.star-filled {
+  color: #ff7a18;
+}
+
+/* Fun card animations */
+@keyframes floatUp {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-14px) rotate(15deg);
+    opacity: 1;
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-4deg) scale(1);
+  }
+  50% {
+    transform: rotate(4deg) scale(1.06);
+  }
+}
+
+@keyframes bouncePop {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.07) translateY(-4px);
+  }
+}
